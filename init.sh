@@ -1,20 +1,39 @@
 #!/usr/bin/env bash
 
-function not_yet_implemented() {
+# display information that current function is missing action paramenter
+#
+function mesos__not_yet_implemented() {
   echo "command: ${FUNCNAME[1]}"
   echo "is not not yet implemented"
   echo "but it's always great idea to contribute to this app ;)"
   return 1
 }
 
-function missing_action() {
+# display information that current function is missing action paramenter
+#
+function mesos__missing_action() {
   echo -e "\nMissing action for command mesos, available:\n"
   compgen -A function | grep "${FUNCNAME[1]}_" | sed -e "s/.*${FUNCNAME[1]}_/- /g"
   echo ''
   return 1
 }
 
-function init() {
+# Display message and ask for confirmation
+#
+# params: information
+function mesos__confirm() {
+  read -r -p "$1"$'\nAre you sure? [y/N] ' response
+  case "$response" in
+    [yY][eE][sS]|[yY])
+      true
+    ;;
+    *)
+      false
+    ;;
+  esac
+}
+
+function mesos__init() {
   cli_tools="curl jq"
 
   for cli_cmd in $cli_tools; do
@@ -35,7 +54,11 @@ for file in $files_list; do
   source "$file";
 done
 
+mesos__init
+
 mesos() {
   cmd="mesos_$@"
-  ${cmd/ /_}
-  }
+  $cmd
+}
+
+mesos deploy svp/sifter stage
