@@ -13,7 +13,7 @@ function mesos__not_yet_implemented() {
 #
 function mesos__missing_action() {
   echo -e "\nMissing action for command mesos, available:\n"
-  compgen -A function | grep "${FUNCNAME[1]}_" | sed -e "s/.*${FUNCNAME[1]}_/- /g"
+  compgen -A function | grep -E "${FUNCNAME[1]}_[^_]" | sed -e "s/.*${FUNCNAME[1]}_/- /g"
   echo ''
   return 1
 }
@@ -57,8 +57,11 @@ done
 mesos__init
 
 mesos() {
-  cmd="mesos_$@"
-  $cmd
+  if [ $# -gt 0 ]; then
+    cmd="mesos_$@"
+    $cmd
+  else
+    mesos__missing_action
+    return 1
+  fi
 }
-
-mesos deploy svp/sifter stage
