@@ -34,13 +34,24 @@ function mesos_tasks() {
 function mesos_tasks-choose() {
   tasks_list=$(mesos_tasks $1)
   tasks_count=$(echo $tasks_list | jq 'length')
-  read -p "Please enter instance number between 1 and $tasks_count:"$'\n' task_no
-  if [ $task_no -gt $tasks_count ]; then
-    echo "Instance #$task_no not exist"
-    exit 1
-  fi
-  task=$(echo $tasks_list | jq ".[$task_no-1]")
-  echo $task
+  case "$tasks_count" in
+    0)
+      echo 'No tasks running for given app'
+      exit 1
+      ;;
+    1)
+      task=$(echo $tasks_list | jq ".[0]")
+      echo $task
+      ;;
+    *)
+      read -p "Please enter instance number between 1 and $tasks_count:"$'\n' task_no
+      if [ $task_no -gt $tasks_count ]; then
+        echo "Instance #$task_no not exist"
+        exit 1
+      fi
+      task=$(echo $tasks_list | jq ".[$task_no-1]")
+      echo $task
+  esac
 }
 
 # find application instance task
