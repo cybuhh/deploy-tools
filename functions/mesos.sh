@@ -37,7 +37,7 @@ function mesos_tasks-choose() {
   case "$tasks_count" in
     0)
       echo 'No tasks running for given app'
-      exit 1
+      return
       ;;
     1)
       task=$(echo $tasks_list | jq ".[0]")
@@ -47,7 +47,7 @@ function mesos_tasks-choose() {
       read -p "Please enter instance number between 1 and $tasks_count:"$'\n' task_no
       if [ $task_no -gt $tasks_count ]; then
         echo "Instance #$task_no not exist"
-        exit 1
+        return
       fi
       task=$(echo $tasks_list | jq ".[$task_no-1]")
       echo $task
@@ -63,13 +63,13 @@ function mesos_tasks-choose() {
 function mesos_exec() {
   task=$(mesos_tasks-choose $1)
 
-  if [ -z "$task" ]; then
+  if [[ "$task" == {*} ]]; then
     app_id=$(echo $task | jq '.appId'  | tr -d  '"')
     slave=$(echo $task | jq '.host'  | tr -d  '"')
     task_id=$(echo $task | jq '.id'  | tr -d  '"')
   fi
 
-  if [[ -n "$slave" && -n "$task_id" ]]; then
+  if [[ -n "$app_id" &&  -n "$slave" && -n "$task_id" ]]; then
     docker_cmd="container_name=\$(ps ax | grep docker | grep $app_id | sed -E 's/.+--name //g' | cut -d ' ' -f 1) && img_id=\$(docker ps -a --no-trunc |  grep \"\$container_name\" | cut -f 1 -d \" \") && docker exec -it \$img_id bash"
     echo $slave: $docker_cmd
     ssh -t $slave "$docker_cmd"
