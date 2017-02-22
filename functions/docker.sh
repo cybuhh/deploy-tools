@@ -2,6 +2,10 @@
 
 DOCKER_REGISTRY='docker.vgnett.no'
 
+function mesos__build-version() {
+  git rev-parse HEAD
+}
+
 # Build new image from Focerfile in current directory
 #
 # params: app_name version_no
@@ -13,7 +17,7 @@ function mesos_build() {
   result=$(docker build -t $1 .)
   if [ $? == 0 ]; then
     image_id=$(echo $result | awk '/Successfully built/{print $NF}')
-    container_image_id=$DOCKER_REGISTRY/$1:$2
+    container_image_id=$DOCKER_REGISTRY/$1:${2:-$(mesos__build-version)}
     docker tag $image_id $container_image_id
     echo $container_image_id
   else
@@ -27,14 +31,14 @@ function mesos_build() {
 #
 # e.g. mesos
 #
-function mesos_docker-push() {
+function mesos_push() {
   echo "Pushing image to $DOCKER_REGISTRY"
   docker push $1
 }
 
 # params: app_name
 function mesos_deploy() {
-  version_no=$(git rev-parse HEAD)
+  version_no=$(mesos__build-version)
   container_image_id=$(mesos_build $1 $version_no)
 echo $?
   #$(mesos_docker-push $container_image_id)

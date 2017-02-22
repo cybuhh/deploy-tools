@@ -62,17 +62,20 @@ function mesos_tasks-choose() {
 #
 function mesos_exec() {
   task=$(mesos_tasks-choose $1)
-  app_id=$(echo $task | jq '.appId'  | tr -d  '"')
-  slave=$(echo $task | jq '.host'  | tr -d  '"')
-  tash_id=$(echo $task | jq '.id'  | tr -d  '"')
 
-  if [[ -n "$slave" && -n "$tash_id" ]]; then
+  if [ -z "$task" ]; then
+    app_id=$(echo $task | jq '.appId'  | tr -d  '"')
+    slave=$(echo $task | jq '.host'  | tr -d  '"')
+    task_id=$(echo $task | jq '.id'  | tr -d  '"')
+  fi
+
+  if [[ -n "$slave" && -n "$task_id" ]]; then
     docker_cmd="container_name=\$(ps ax | grep docker | grep $app_id | sed -E 's/.+--name //g' | cut -d ' ' -f 1) && img_id=\$(docker ps -a --no-trunc |  grep \"\$container_name\" | cut -f 1 -d \" \") && docker exec -it \$img_id bash"
     echo $slave: $docker_cmd
     ssh -t $slave "$docker_cmd"
   else
-    echo "Can't find docker container on slave ($slave)"
-    exit 1
+    echo "Can't find docker container on slave"
+    return 1
   fi
 }
 
