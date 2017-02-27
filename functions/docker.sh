@@ -13,7 +13,6 @@ function mesos__build-version() {
 # e.g. mesos build svp-foo 123456
 #
 function mesos_build() {
-  echo "Building docker image"
   result=$(docker build -t $1 .)
   if [ $? == 0 ]; then
     image_id=$(echo $result | awk '/Successfully built/{print $NF}')
@@ -21,8 +20,6 @@ function mesos_build() {
     docker tag $image_id $container_image_id
     echo $container_image_id
   else
-    echo "There was an error durring building image"
-    echo $result
     false
   fi
 }
@@ -36,13 +33,17 @@ function mesos_push() {
   docker push $1
 }
 
-# params: app_name
+# params: app_name env_name
 function mesos_deploy() {
   version_no=$(mesos__build-version)
   container_image_id=$(mesos_build $1 $version_no)
-echo $?
-  #$(mesos_docker-push $container_image_id)
-  #mesos_container $1 $container_image_id
-  #echo $1
-  #echo $container_image_id
+  if [ $# -lt 2 ]; then
+    mesos__confirm "No application name provided, $1 will be used"
+    app_name=$1
+  else
+    app_name=$2
+  fi
+
+  mesos_push $container_image_id
+  mesos_container $app_name $container_image_id
 }

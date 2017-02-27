@@ -13,7 +13,7 @@ function mesos_app-url {
 #
 # e.g. mesos find app_name
 function mesos_app() {
-  curl -s $(mesos_app-url $1) | jq '.app'
+  echo $(curl -s $(mesos_app-url $1) | jq '.app')
 }
 
 # find application instance tasks
@@ -87,7 +87,7 @@ function mesos_exec() {
 #
 function mesos_scale() {
   app=$(mesos_app $1)
-  curl -X PUT -H 'Content-Type:application/json' -d "{\"instances\": $2}" $(mesos_app-url $1)
+  curl -X PUT -H 'Content-Type:application/json' -d "{\"instances\": $2}" $(mesos_app-url $1)?force=true
 }
 
 # suspend running application - scale to 0
@@ -97,7 +97,7 @@ function mesos_scale() {
 # e.g. mesos suspend app_name
 #
 function mesos_suspend() {
-  $(mesos_scale 0)
+  mesos_scale $1 0
 }
 
 # destroy application - remove completely from mesos
@@ -121,7 +121,8 @@ function mesos_destroy() {
 function mesos_container() {
   app=$(mesos_app $1)
   if [ $# -gt 1 ]; then
-    query=curl $(mesos_app-url $1) | jq ".app | {container} | .container.docker.image |= \"$2\""
+    app_url=$(mesos_app-url $1)
+    query=$(curl $app_url | jq ".app | {container} | .container.docker.image |= \"$2\"")
     curl -s -X PUT -H 'Content-Type:application/json' -d "$query" $(mesos_app-url $1)
   else
     curl -s $(mesos_app-url $1) | jq '.app.container.docker.image'
